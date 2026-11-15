@@ -64,7 +64,7 @@ class StudentView(ttk.Frame):
             self._need_data_btn.destroy()
             self._need_data_btn = None
 
-        best = best_time(result.get("hourly"))
+        best = best_time(result.get("hourly"), get_open_hour(result.get("config")))
         if best:
             label, wait = best
             self._summary.configure(

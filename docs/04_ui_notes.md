@@ -31,6 +31,14 @@
 - If nobody arrived near that time, the whole-day average is used.
 
 ## Testing
-- `python -m pytest tests/test_ui_helpers.py` runs 37 tests with no display needed.
+- `python -m pytest tests/test_ui_helpers.py` runs 41 tests with no display needed.
 - Logic is kept in `helpers.py`, without Tkinter, so it can be tested.
 - Manual check: app opens, bad input shows a popup, same seed gives same KPIs, every chart draws and saves.
+
+## Integration
+- Checked against the real config, simulation, analysis and chart code; a full run works end to end.
+- Form settings map onto `canteen_config.json`: staff -> `staff_count`, balking limit -> `balking_queue_limit` / `default_balking_limit`, peak arrival rate -> scales all `arrival_rates` so the busiest slot equals the entered value.
+- Key names live in `CONFIG_KEYS` at the top of `helpers.py`.
+- Simulation minute 0 is 9:00 AM unless the config has `open_hour`.
+- Utilisation arrives as a 0-1 fraction and is shown as a percentage.
+- "Use sample data" loads `tests/dummy_customers.csv` for testing without the engine.

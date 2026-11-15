@@ -62,13 +62,20 @@ def test_validate_handles_missing_keys():
 
 # --------------------------------------------------------------------- config
 BASE_CONFIG = {
-    "counters": [{"name": "Snacks", "staff": 1}, {"name": "Thali", "staff": 2}],
-    "peak_arrival_rate": 4.0, "balking_limit": 8,
+    "default_balking_limit": 8,
+    "counters": [
+        {"name": "Snacks", "staff_count": 1, "balking_queue_limit": 10},
+        {"name": "Thali", "staff_count": 2, "balking_queue_limit": 8},
+    ],
+    "arrival_rates": {
+        "morning": {"start": 0, "end": 150, "rate": 0.8},
+        "lunch": {"start": 150, "end": 240, "rate": 2.0},
+    },
 }
 
 
 def settings(**kw):
-    base = {"num_counters": 2, "staff_per_counter": 3, "peak_arrival_rate": 7.0,
+    base = {"num_counters": 2, "staff_per_counter": 3, "peak_arrival_rate": 4.0,
             "balking_limit": 10, "seed": 1}
     base.update(kw)
     return base
@@ -80,10 +87,18 @@ def test_apply_settings_does_not_mutate_original():
     assert BASE_CONFIG == original
 
 
-def test_apply_settings_sets_values():
+def test_apply_settings_sets_staff_and_balking():
     cfg = h.apply_settings_to_config(BASE_CONFIG, settings())
-    assert cfg["peak_arrival_rate"] == 7.0 and cfg["balking_limit"] == 10
-    assert [c["staff"] for c in cfg["counters"]] == [3, 3]
+    assert [c["staff_count"] for c in cfg["counters"]] == [3, 3]
+    assert [c["balking_queue_limit"] for c in cfg["counters"]] == [10, 10]
+    assert cfg["default_balking_limit"] == 10
+
+
+def test_apply_settings_scales_arrival_rates_to_new_peak():
+    cfg = h.apply_settings_to_config(BASE_CONFIG, settings(peak_arrival_rate=4.0))
+    rates = cfg["arrival_rates"]
+    assert rates["lunch"]["rate"] == pytest.approx(4.0)     # busiest slot = new peak
+    assert rates["morning"]["rate"] == pytest.approx(1.6)   # others scaled by the same x2
 
 
 def test_apply_settings_adds_and_removes_counters():
@@ -93,9 +108,15 @@ def test_apply_settings_adds_and_removes_counters():
     assert [c["name"] for c in fewer["counters"]] == ["Snacks"]
 
 
+def test_apply_settings_survives_config_without_rates_or_counters():
+    cfg = h.apply_settings_to_config({}, settings())
+    assert cfg["default_balking_limit"] == 10
+
+
 def test_defaults_from_config():
     d = h.defaults_from_config(BASE_CONFIG)
-    assert d["num_counters"] == 2 and d["peak_arrival_rate"] == 4.0 and d["balking_limit"] == 8
+    assert d["num_counters"] == 2 and d["peak_arrival_rate"] == 2.0 and d["balking_limit"] == 8
+    assert d["staff_per_counter"] == 1
     assert h.defaults_from_config(None) == h.DEFAULT_SETTINGS
 
 
@@ -150,6 +171,11 @@ def test_peak_queue_text():
 def test_counter_rows():
     rows = h.counter_rows({"utilisation": {"Snacks": 81.2}, "revenue_by_counter": {"Snacks": 5000, "Thali": 9000}})
     assert rows == [("Snacks", "81.2%", "₹5,000"), ("Thali", "—", "₹9,000")]
+
+
+def test_counter_rows_converts_fraction_utilisation_to_percent():
+    rows = h.counter_rows({"utilisation": {"Snacks": 1.0, "Beverages": 0.319}, "revenue_by_counter": {}})
+    assert rows == [("Snacks", "100.0%", "—"), ("Beverages", "31.9%", "—")]
     assert h.counter_rows(None) == []
 
 
@@ -197,6 +223,11 @@ def test_best_time_finds_lowest_average():
     assert h.best_time(pd.DataFrame()) is None
     nan_only = pd.DataFrame({"hour": [12], "avg_wait": [math.nan]})
     assert h.best_time(nan_only) is None
+
+
+def test_best_time_gives_clock_range_when_open_hour_known():
+    hourly = pd.DataFrame({"hour": [0, 1, 4], "wait_time": [3.0, 9.0, 1.5]})
+    assert h.best_time(hourly, open_hour=9) == ("1:00 PM - 2:00 PM", 1.5)
 
 
 def test_best_time_with_unknown_column_names_uses_last_numeric():
@@ -251,7 +282,7 @@ def test_run_pipeline_with_sample_and_fake_backend(monkeypatch, tmp_path):
     assert result["source"] == "sample"
     assert result["metrics"] == {"avg_wait": 5.0}
     assert result["comparison"] is None and result["scenario_error"]
-    assert result["config"]["balking_limit"] == 10
+    assert result["config"]["default_balking_limit"] == 10
     assert messages  # progress was reported
 
 

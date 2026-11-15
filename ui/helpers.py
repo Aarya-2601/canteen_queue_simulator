@@ -16,6 +16,7 @@ from __future__ import annotations
 import copy
 import importlib
 import math
+import numbers
 import re
 import sys
 from pathlib import Path
@@ -33,14 +34,15 @@ OUTPUT_CHARTS_DIR = PROJECT_ROOT / "outputs" / "charts"
 OUTPUT_REPORTS_DIR = PROJECT_ROOT / "outputs" / "reports"
 
 # --------------------------------------------------------------------------- #
-# ASSUMPTIONS ABOUT THE CONFIG FILE  (confirm with Chaiti, edit ONLY here)
+# CONFIG KEY NAMES  (match config/canteen_config.json; edit ONLY here)
 # --------------------------------------------------------------------------- #
 CONFIG_KEYS = {
-    "counters": "counters",              # list of counter dicts (or names)
-    "counter_name": "name",              # key inside each counter dict
-    "counter_staff": "staff",            # key inside each counter dict
-    "peak_rate": "peak_arrival_rate",    # students per minute at the lunch peak
-    "balking_limit": "balking_limit",    # queue length at which people leave
+    "counters": "counters",                    # list of counter dicts
+    "counter_name": "name",                    # key inside each counter dict
+    "counter_staff": "staff_count",            # key inside each counter dict
+    "counter_balk": "balking_queue_limit",     # per-counter balking limit
+    "default_balk": "default_balking_limit",   # used when a counter has none
+    "arrival_rates": "arrival_rates",          # {slot: {start, end, rate}}
 }
 OPEN_HOUR_KEYS = ("open_hour", "opening_hour")   # hour (0-23) the canteen opens
 DEFAULT_OPEN_HOUR = 9
@@ -56,10 +58,10 @@ FIELDS: list[dict[str, Any]] = [
      "min": 1, "max": 10, "default": 2, "required": True,
      "hint": "whole number, 1 to 10"},
     {"key": "peak_arrival_rate", "label": "Peak arrival rate (students/min)",
-     "kind": float, "min": 0.1, "max": 100.0, "default": 6.0, "required": True,
-     "hint": "e.g. 6 or 7.5"},
+     "kind": float, "min": 0.1, "max": 100.0, "default": 2.6, "required": True,
+     "hint": "arrivals per minute in the busiest slot, e.g. 2.6"},
     {"key": "balking_limit", "label": "Balking limit (queue length)", "kind": int,
-     "min": 1, "max": 100, "default": 12, "required": True,
+     "min": 1, "max": 100, "default": 10, "required": True,
      "hint": "students in a queue before others walk away"},
     {"key": "seed", "label": "Random seed (optional)", "kind": int,
      "min": 0, "max": 2**31 - 1, "default": 42, "required": False,
@@ -144,9 +146,30 @@ def apply_settings_to_config(config: dict, settings: dict) -> dict:
                 counter[ck["counter_staff"]] = int(settings["staff_per_counter"])
         cfg[ck["counters"]] = counters
 
-    cfg[ck["peak_rate"]] = float(settings["peak_arrival_rate"])
-    cfg[ck["balking_limit"]] = int(settings["balking_limit"])
+    limit = int(settings["balking_limit"])
+    cfg[ck["default_balk"]] = limit
+    for counter in cfg.get(ck["counters"], []):
+        if isinstance(counter, dict):
+            counter[ck["counter_balk"]] = limit
+
+    # "Peak arrival rate" = the busiest slot's rate; scale every slot by the same factor
+    rates = cfg.get(ck["arrival_rates"])
+    current_peak = _peak_rate(rates)
+    if current_peak:
+        factor = float(settings["peak_arrival_rate"]) / current_peak
+        for slot in rates.values():
+            if isinstance(slot, dict) and "rate" in slot:
+                slot["rate"] = round(float(slot["rate"]) * factor, 4)
     return cfg
+
+
+def _peak_rate(rates) -> Optional[float]:
+    """Highest arrival rate among the time slots (None if unavailable)."""
+    if not isinstance(rates, dict):
+        return None
+    values = [float(v["rate"]) for v in rates.values()
+              if isinstance(v, dict) and isinstance(v.get("rate"), (int, float))]
+    return max(values) if values else None
 
 
 def defaults_from_config(config: dict) -> dict:
@@ -161,10 +184,11 @@ def defaults_from_config(config: dict) -> dict:
         first = counters[0]
         if isinstance(first, dict) and isinstance(first.get(ck["counter_staff"]), int):
             out["staff_per_counter"] = first[ck["counter_staff"]]
-    if isinstance(config.get(ck["peak_rate"]), (int, float)):
-        out["peak_arrival_rate"] = config[ck["peak_rate"]]
-    if isinstance(config.get(ck["balking_limit"]), int):
-        out["balking_limit"] = config[ck["balking_limit"]]
+    peak = _peak_rate(config.get(ck["arrival_rates"]))
+    if peak:
+        out["peak_arrival_rate"] = peak
+    if isinstance(config.get(ck["default_balk"]), int):
+        out["balking_limit"] = config[ck["default_balk"]]
     return out
 
 
@@ -183,6 +207,12 @@ def get_open_hour(config: Optional[dict]) -> int:
 # --------------------------------------------------------------------------- #
 def _is_missing(value: Any) -> bool:
     return value is None or (isinstance(value, float) and math.isnan(value))
+
+
+def _is_number(value: Any) -> bool:
+    """True for real numbers (including numpy ints/floats), False for NaN, bools, text."""
+    return (isinstance(value, numbers.Real) and not isinstance(value, bool)
+            and not math.isnan(float(value)))
 
 
 def fmt_minutes(value: Any) -> str:
@@ -262,7 +292,15 @@ def counter_rows(metrics: Optional[dict]) -> list[tuple[str, str, str]]:
     util = m.get("utilisation") or {}
     revenue = m.get("revenue_by_counter") or {}
     names = list(util.keys()) + [n for n in revenue if n not in util]
-    return [(str(n), fmt_percent(util.get(n)), fmt_rupees(revenue.get(n))) for n in names]
+    # Janhavi's metrics give utilisation as a 0-1 fraction; show it as a percentage
+    as_fraction = bool(util) and all(_is_number(v) and v <= 1.0 for v in util.values())
+
+    def pct(value):
+        if not _is_number(value):
+            return fmt_percent(None)
+        return fmt_percent(value * 100 if as_fraction else value)
+
+    return [(str(n), pct(util.get(n)), fmt_rupees(revenue.get(n))) for n in names]
 
 
 def dataframe_to_rows(df: Optional[pd.DataFrame], decimals: int = 2) -> tuple[list[str], list[list[str]]]:
@@ -300,8 +338,13 @@ def _find_column(df: pd.DataFrame, candidates: tuple[str, ...]) -> Optional[str]
     return None
 
 
-def best_time(hourly: Optional[pd.DataFrame]) -> Optional[tuple[str, float]]:
-    """(label, average wait) of the hour with the shortest average wait."""
+def best_time(hourly: Optional[pd.DataFrame],
+              open_hour: Optional[int] = None) -> Optional[tuple[str, float]]:
+    """(label, average wait) of the hour with the shortest average wait.
+
+    The hourly table counts hours since opening.  When ``open_hour`` is given
+    the label becomes a clock range such as ``"1:00 PM - 2:00 PM"``.
+    """
     if hourly is None or len(hourly) == 0:
         return None
     frame = hourly.reset_index() if not isinstance(hourly.index, pd.RangeIndex) else hourly
@@ -317,7 +360,12 @@ def best_time(hourly: Optional[pd.DataFrame]) -> Optional[tuple[str, float]]:
         return None
     best_index = valid[avg_col].idxmin()
     # read the two cells separately so an integer hour is not upcast to 14.0
-    return str(valid.at[best_index, hour_col]), float(valid.at[best_index, avg_col])
+    raw_hour = valid.at[best_index, hour_col]
+    label = str(raw_hour)
+    if open_hour is not None and _is_number(raw_hour):
+        start = open_hour * 60 + float(raw_hour) * 60
+        label = f"{minutes_to_clock(start)} - {minutes_to_clock(start + 60)}"
+    return label, float(valid.at[best_index, avg_col])
 
 
 def quickest_counter(df: Optional[pd.DataFrame], clock_minutes: int, open_minutes: int,
