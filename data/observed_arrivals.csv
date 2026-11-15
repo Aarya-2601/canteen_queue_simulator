@@ -1,0 +1,61 @@
+interval_id,time_slot,minute,observed_arrivals,queue_snacks,queue_thali,queue_beverages,notes
+1,10:00 - 10:05,5,6,1,0,2,Morning lectures starting; light tea rush
+2,10:05 - 10:10,10,7,2,0,2,Light tea and snacks
+3,10:10 - 10:15,15,5,1,1,1,Normal morning
+4,10:15 - 10:20,20,8,3,1,3,Short 10-min tea break for FE batch
+5,10:20 - 10:25,25,9,4,0,3,Snack counter queue building
+6,10:25 - 10:30,30,6,2,1,2,Break ends
+7,10:30 - 10:35,35,4,1,0,1,Quiet class hour
+8,10:35 - 10:40,40,5,1,0,1,Quiet
+9,10:40 - 10:45,45,4,2,0,1,Quiet
+10,10:45 - 10:50,50,6,2,1,2,Staff break
+11,10:50 - 10:55,55,5,1,0,1,Quiet
+12,10:55 - 11:00,60,7,2,1,2,Minor lull
+13,11:00 - 11:05,65,8,3,1,2,Degree diploma crossover
+14,11:05 - 11:10,70,9,3,1,3,Chai and vada pav
+15,11:10 - 11:15,75,7,2,0,2,Normal
+16,11:15 - 11:20,80,6,2,1,1,Normal
+17,11:20 - 11:25,85,8,2,1,2,Pre-lunch early arrivals
+18,11:25 - 11:30,90,10,4,2,2,Early lunch students
+19,11:30 - 11:35,95,11,4,2,3,Free slot batches
+20,11:35 - 11:40,100,12,5,3,3,Gradual build-up
+21,11:40 - 11:45,105,10,4,2,3,Normal
+22,11:45 - 11:50,110,13,5,4,3,Approaching noon
+23,11:50 - 11:55,115,14,6,4,3,First lunch wave begins
+24,11:55 - 12:00,120,16,6,5,4,Pre-rush thali orders
+25,12:00 - 12:05,125,18,7,6,4,Degree 12 PM bell dismisses
+26,12:05 - 12:10,130,21,8,7,5,Heavy clump from Quadrangle
+27,12:10 - 12:15,135,19,9,8,5,Queues extending
+28,12:15 - 12:20,140,23,10,8,6,High congestion
+29,12:20 - 12:25,145,26,11,9,7,Group arrivals (Negative Binomial burst)
+30,12:25 - 12:30,150,29,12,10,8,Main lunch bell ringing at 12:30
+31,12:30 - 12:35,155,38,15,12,10,Massive rush; IT and Mech batches arrive
+32,12:35 - 12:40,160,42,17,14,11,Peak lunch burst; balking observed
+33,12:40 - 12:45,165,39,18,15,12,Snacks queue reaches 18 students
+34,12:45 - 12:50,170,36,16,14,10,Tables nearly 100% occupied
+35,12:50 - 12:55,175,34,15,13,9,Continuous rush
+36,12:55 - 13:00,180,35,16,13,10,1:00 PM break starts
+37,13:00 - 13:05,185,41,18,15,11,Second huge wave; diploma & degree overlap
+38,13:05 - 13:10,190,44,19,16,12,Absolute maximum rush hour peak
+39,13:10 - 13:15,195,38,17,15,10,Severe counter bottleneck
+40,13:15 - 13:20,200,35,16,14,9,Balking rate approx 18%
+41,13:20 - 13:25,205,30,14,12,8,Seating turnover slow
+42,13:25 - 13:30,210,27,12,11,7,Rush starting to ease slightly
+43,13:30 - 13:35,215,24,11,9,6,Afternoon lab batches leaving
+44,13:35 - 13:40,220,20,9,8,5,Congestion subsiding
+45,13:40 - 13:45,225,17,8,6,5,Returning to manageable queues
+46,13:45 - 13:50,230,15,6,5,4,Steady taper
+47,13:50 - 13:55,235,13,5,4,4,Afternoon lull begins
+48,13:55 - 14:00,240,11,4,3,3,Post-lunch quiet
+49,14:00 - 14:05,245,9,3,2,3,Afternoon lecture block
+50,14:05 - 14:10,250,8,2,2,3,Chai and beverage focus
+51,14:10 - 14:15,255,7,2,1,2,Low activity
+52,14:15 - 14:20,260,6,1,1,2,Low activity
+53,14:20 - 14:25,265,7,2,1,2,Tea break
+54,14:25 - 14:30,270,8,2,1,3,Hostelers visiting
+55,14:30 - 14:35,275,6,1,1,2,Quiet
+56,14:35 - 14:40,280,5,1,0,2,Quiet
+57,14:40 - 14:45,285,4,1,0,1,Slow
+58,14:45 - 14:50,290,5,1,1,1,Slow
+59,14:50 - 14:55,295,4,0,0,1,Closing prep
+60,14:55 - 15:00,300,3,0,0,1,End of operational recording

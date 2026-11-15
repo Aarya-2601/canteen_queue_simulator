@@ -1,0 +1,44 @@
+{
+  "canteen_name": "VJTI College Canteen",
+  "simulation_minutes": 360,
+  "random_seed": 42,
+  "default_balking_limit": 10,
+  "negative_binomial_r": 4,
+  "counters": [
+    {
+      "name": "Snacks",
+      "staff_count": 2,
+      "efficiency_multiplier": 1.0,
+      "balking_queue_limit": 10
+    },
+    {
+      "name": "Thali",
+      "staff_count": 2,
+      "efficiency_multiplier": 1.0,
+      "balking_queue_limit": 8
+    },
+    {
+      "name": "Beverages",
+      "staff_count": 1,
+      "efficiency_multiplier": 1.0,
+      "balking_queue_limit": 8
+    }
+  ],
+  "arrival_rates": {
+    "morning": {
+      "start": 0,
+      "end": 150,
+      "rate": 0.8
+    },
+    "lunch": {
+      "start": 150,
+      "end": 240,
+      "rate": 2.6
+    },
+    "afternoon": {
+      "start": 240,
+      "end": 360,
+      "rate": 0.9
+    }
+  }
+}
