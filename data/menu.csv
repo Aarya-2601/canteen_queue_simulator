@@ -1,0 +1,21 @@
+item_id,name,category,price,prep_time,popularity_weight,stock_limit,is_combo,combo_items
+ITM01,Vada Pav,Snacks,15.0,1.0,0.16,200,False,
+ITM02,Samosa Pav,Snacks,18.0,1.0,0.14,160,False,
+ITM03,Misal Pav,Snacks,40.0,2.5,0.10,80,False,
+ITM04,Poha,Snacks,25.0,1.5,0.08,70,False,
+ITM05,Idli Sambhar,Snacks,35.0,2.0,0.06,60,False,
+ITM06,Medu Vada,Snacks,40.0,2.0,0.05,50,False,
+ITM07,Bread Butter,Snacks,20.0,1.0,0.04,50,False,
+ITM08,Cheese Grilled Sandwich,Snacks,50.0,3.5,0.06,45,False,
+ITM09,Veg Mini Thali,Thali,60.0,2.5,0.07,80,False,
+ITM10,Special VJTI Full Thali,Thali,90.0,3.5,0.05,50,False,
+ITM11,Veg Biryani,Thali,70.0,2.0,0.06,60,False,
+ITM12,Dal Khichdi,Thali,55.0,2.5,0.04,40,False,
+ITM13,Cutting Chai,Beverages,10.0,0.8,0.20,250,False,
+ITM14,Filter Coffee,Beverages,20.0,1.2,0.08,100,False,
+ITM15,Cold Coffee,Beverages,35.0,2.0,0.06,60,False,
+ITM16,Fresh Lime Soda,Beverages,25.0,1.5,0.04,50,False,
+ITM17,Kokum Sharbat,Beverages,20.0,1.0,0.03,50,False,
+ITM18,Samosa Pav + Cutting Chai,Combos,25.0,1.2,0.12,100,True,Samosa Pav;Cutting Chai
+ITM19,Vada Pav + Cutting Chai,Combos,22.0,1.2,0.10,100,True,Vada Pav;Cutting Chai
+ITM20,Misal Pav + Chai Combo,Combos,48.0,2.2,0.07,60,True,Misal Pav;Cutting Chai
